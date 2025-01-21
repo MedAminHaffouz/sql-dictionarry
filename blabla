@@ -1,0 +1,5 @@
+Mot(id,mot,langue,type,premiere_lettre,genre,pluralité)
+Sens(id,texte,langue)
+Posseder(#Mot.id,#Sens.id)
+Synonyme(#Mot.id,#MotSyn.id)
+Antonyme(#Mot.id,#MotAnt.id)
