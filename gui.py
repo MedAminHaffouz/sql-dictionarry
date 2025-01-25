@@ -4,7 +4,7 @@ import database
 import random
 from tkinter import messagebox
 
-#database.add_word(mot,lang,t,genre=None,pl=None)
+#database.add_word(mot,lang,t,genre,pl)
 #it will add a new word
 
 #database.add_meaning(lang,txt)
@@ -30,6 +30,12 @@ from tkinter import messagebox
 
 #database.showall(letter)
 #it will return all the letters of that word
+
+#database.getallmeanings()
+#returns all existant meanings
+
+#database.getallwords()
+#returns all existant words
 
 def randomcolorcode():
     return "#" + "".join(random.choices("0123456789abcdef", k=6))
@@ -63,11 +69,27 @@ def lighten_color(hex_color, factor=1.2):
 
     return lighter_color
 
+def save_word():
+    to_delete=[]
+    global data_dict
+    for word,elements in data_dict.items():
+        database.add_word(word,elements["language"],elements["type"],elements["gender"],elements["plurality"])
+        for meaning in meanings:
+            database.add_meaning(meaning[1],meaning[0])
+            database.link_wm(elements["language"],word,elements["type"],meaning[1],meaning[0])
+        to_delete.append(word)
+
+    for word in to_delete:
+        del data_dict[word]
+
+
 def new_word_gui():
     # A global dictionary to store the data
+    global data_dict
     data_dict = {}
 
     # Create the new word GUI window
+    global new_word_window
     new_word_window = tk.Toplevel()
     new_word_window.title("New Word")
     new_word_window.geometry("400x300")
@@ -177,40 +199,118 @@ def new_word_gui():
         else:
             # For all other types, just save directly
             tk.messagebox.showinfo("Success", f"Word '{word}' added successfully!")
+        save_word()
 
     # Create Word button
     create_btn = tk.Button(new_word_window, text="Create Word", command=handle_new_word)
-    create_btn.pack(pady=10)
+
 
     #-----------------------------------------------------------------------------------------------------------------
 
 
     global meanings
-    meanings=["helloworld","mc"]
+    meanings=[]
+
+    global showed
+    showed = False
+    global items_ex
+    items_ex = {}
+    choosen_m = []  # To store the selected meaning
+
+    def selected(text, lang):
+        """
+        Function called when a meaning is selected.
+        Stores the selected text and language in choosen_m.
+        """
+        global showed, items_ex, choosen_m
+        choosen_m = [text, lang]  # Store the selected language and text
+        print(f"Selected: Text='{text}', Language='{lang}'")  # Print the selected meaning
+        child_window.destroy()
+        print(choosen_m)
+        meanings_manager_window.destroy()
+        meanings.append(choosen_m)
+        manage_meanings()
+        showed=False
+
+
+
+    def select_meaning_from_existants():
+        global child_window
+        child_window = tk.Toplevel()
+        child_window.title('get meaning from existant meanings')
+        child_window.geometry("300x200")
+
+        arr=[]
+        #arr=[["Hello", "English"], ["Bonjour", "French"], ["Hola", "Spanish"]]
+        arr=database.getallmeanings()
+
+        filtered_arr = [meaning for meaning in arr if meaning not in meanings]
+
+        global showed, items_ex
+        if not showed:
+            for idx, (text, lang) in enumerate(filtered_arr):
+
+                items_ex[idx] = []
+                items_ex[idx].append(tk.Frame(child_window))  # Create a frame for the row
+                f = items_ex[idx][0]
+
+                # Create labels for text and language
+                items_ex[idx].append(tk.Label(f, text=f"Text: {text}"))
+                items_ex[idx].append(tk.Label(f, text=f"Language: {lang}"))
+
+                # Create the "Select" button, passing text and lang to `selected`
+                items_ex[idx].append(
+                    tk.Button(f, text="Select", command=lambda t=text, l=lang: selected(t, l))
+                )
+
+                # Arrange the widgets in the row
+                items_ex[idx][1].grid(column=0, row=0, padx=5, pady=5)  # Text label
+                items_ex[idx][2].grid(column=1, row=0, padx=5, pady=5)  # Language label
+                items_ex[idx][3].grid(column=2, row=0, padx=5, pady=5)  # Select button
+
+                # Display the frame
+                f.pack(pady=5)
+            showed = True
+
 
     def manage_meanings():
         items = {}
+        global meanings_manager_window
         meanings_manager_window=tk.Toplevel()
         meanings_manager_window.title("Meanings Manager")
         meanings_manager_window.geometry("300x200")
 
-        for x in meanings:
-            items[x] = []
-            items[x].append(tk.Frame(meanings_manager_window))
-            f = items[x][0]
-            items[x].append(tk.Label(f, text=x))
-            # Create a button that passes the label's text to `selected`
-            #items[x].append(tk.Button(f, text="Select", command=lambda text=x: selected(text)))
-            items[x][1].grid(column=0, row=0)
-            #items[x][2].grid(column=1, row=0)
-            f.pack()
+        for idx, (text, lang) in enumerate(meanings):
+            items[idx] = []
+            items[idx].append(tk.Frame(meanings_manager_window))  # Create a frame for the row
+            f = items[idx][0]
 
-        add_existant_meaning=tk.Button(meanings_manager_window, text="Add Meaning From list of existant meanings")
+            # Create labels for text and language
+            items[idx].append(tk.Label(f, text=f"Text: {text}"))
+            items[idx].append(tk.Label(f, text=f"Language: {lang}"))
+
+
+            # Arrange the widgets in the row
+            items[idx][1].grid(column=0, row=0, padx=5, pady=5)  # Text label
+            items[idx][2].grid(column=1, row=0, padx=5, pady=5)  # Language label
+
+            # Display the frame
+            f.pack(pady=5)
+
+        add_existant_meaning=tk.Button(meanings_manager_window, text="Add Meaning From list of existant meanings",command=select_meaning_from_existants)
+        add_existant_meaning.pack(pady=10)
 
 
     managemeaningsbtn=tk.Button(new_word_window, text="Manage Meanings",command=manage_meanings)
 
-    managemeaningsbtn.pack(pady=10)
+    managemeaningsbtn.pack(pady=5)
+    create_btn.pack(pady=5)
+
+
+def show_dictio():
+    show_dictio=tk.Toplevel()
+    show_dictio.title("Dictionary Explorer")
+    show_dictio.geometry("500x500")
 
 
 

@@ -151,3 +151,28 @@ def showall(letter):
 
     return results
 
+def getallmeanings():
+    conn = sqlite3.connect(DB_path)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT texte,langue
+        FROM Sens
+        ORDER BY texte
+    ''')
+    res=cursor.fetchall()
+
+    return res
+
+def getallwords():
+    conn = sqlite3.connect(DB_path)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT mot,langue,type
+        FROM Mot
+        ORDER BY mot
+    ''')
+    res=cursor.fetchall()
+
+    return res
