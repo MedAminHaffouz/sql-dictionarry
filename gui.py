@@ -308,30 +308,37 @@ def new_word_gui():
     managemeaningsbtn.pack(pady=5)
     create_btn.pack(pady=5)
 
-def expand_word(word,typeword,lang):
-    res=database.showword(word,lang,typeword)
+
+def expand_word(word, typeword, lang):
+    res = database.showword(word, lang, typeword)
+
+    # Check if results are returned
+    if not res:
+        print("No results found.")
+        return
+
+    res = list(res[0])  # Assuming there's at least one result
     print(res)
-    res=list(res[0])
-    print(res)
-    child_window=tk.Toplevel()
-    child_window.title(f"{word}({lang})")
+
+    child_window = tk.Toplevel()
+    child_window.title(f"{word} ({lang})")
     child_window.geometry("300x200")
 
-    label=tk.Label(child_window, text="")
-    output=""
-    output+=res[0]+" ("+res[2]+")"
-    if res[3]!=None:
-        output+=" "+res[3]+" "
-    if res[4]!=None:
-        output+=" "+res[4]+" "
-    output+="\nlanguage :"+res[1]+"\n"
-    if res[5]!=None:
-        output+="Meanings :"+res[5]+"\n"
-    if res[6]!=None:
-        output += "Synonyms :" + res[5] + "\n"
-    if res[7]!=None:
-        output += "Antonyms :" + res[5] + "\n"
-    label.configure(text=output)
+    output = ""
+    output += f"{res[0]} ({res[2]})"  # Word and type
+    if res[3] is not None:
+        output += f" {res[3]}"  # Genre
+    if res[4] is not None:
+        output += f" {res[4]}"  # Plurality
+    output += f"\nLanguage: {res[1]}\n"  # Language
+    if res[5] is not None:
+        output += f"Meanings: {res[5]}\n"  # Meanings
+    if res[6] is not None:
+        output += f"Synonyms: {res[6]}\n"  # Synonyms
+    if res[7] is not None:
+        output += f"Antonyms: {res[7]}\n"  # Antonyms
+
+    label = tk.Label(child_window, text=output)
     label.pack(pady=5)
 
 
@@ -383,6 +390,183 @@ def new_meaning_gui():
     textentry.grid(row=1, column=1, padx=5, pady=5)
     validbutton.grid(row=2, column=0, padx=5, pady=5,columnspan=2)
 
+def match_syn_gui():
+    match_syn_window=tk.Toplevel()
+    match_syn_window.title("Add synonyms")
+    match_syn_window.geometry("500x500")
+
+    def conf_word1(w,t,l):
+        word1.append(w)
+        word1.append(t)
+        word1.append(l)
+        word1ent.config(text=w)
+        wordbrowser.destroy()
+
+    def chooseword1():
+        wordlist=database.getallwords()
+
+        global wordbrowser
+        wordbrowser=tk.Toplevel()
+        wordbrowser.title("Word List")
+        wordbrowser.geometry("500x500")
+        for word in wordlist:
+            view=[]
+            view.append(tk.Frame(wordbrowser))
+            f=view[0]
+            view.append(tk.Label(f,text=word[0]))
+            view.append(tk.Label(f,text=word[1]))
+            view.append(tk.Label(f,text=word[2]))
+            view.append(tk.Button(f,text="Select Word",command=lambda w=word[0],l=word[1],t=word[2]: conf_word1(w,t,l)))
+            view[1].grid(row=0, column=0, padx=5, pady=5)
+            view[2].grid(row=0, column=1, padx=5, pady=5)
+            view[3].grid(row=0, column=2, padx=5, pady=5)
+            view[4].grid(row=0, column=3, padx=5, pady=5)
+            f.pack(pady=5)
+
+    def conf_word2(w,t,l):
+        word2.append(w)
+        word2.append(t)
+        word2.append(l)
+        word2ent.config(text=w)
+        wordbrowser.destroy()
+
+    def chooseword2():
+        wordlist=database.getallwords()
+
+        global wordbrowser
+        wordbrowser=tk.Toplevel()
+        wordbrowser.title("Word List")
+        wordbrowser.geometry("500x500")
+        for word in wordlist:
+            view=[]
+            view.append(tk.Frame(wordbrowser))
+            f=view[0]
+            view.append(tk.Label(f,text=word[0]))
+            view.append(tk.Label(f,text=word[1]))
+            view.append(tk.Label(f,text=word[2]))
+            view.append(tk.Button(f,text="Select Word",command=lambda w=word[0],l=word[1],t=word[2]: conf_word2(w,t,l)))
+            view[1].grid(row=0, column=0, padx=5, pady=5)
+            view[2].grid(row=0, column=1, padx=5, pady=5)
+            view[3].grid(row=0, column=2, padx=5, pady=5)
+            view[4].grid(row=0, column=3, padx=5, pady=5)
+            f.pack(pady=5)
+
+    def do_match():
+        if word1==[] or word2==[]:
+            messagebox.showerror("Error", "Please select at least one word")
+        if word1[1]!=word2[1]:
+            messagebox.showerror("Error", "Please select the same type of words")
+        else :
+            database.link_s(word1[2],word2[2],word1[1],word1[0],word2[0])
+            match_syn_window.destroy()
+            messagebox.showinfo("Success", f"{word1[0]} and {word2[0]} are now synonyms!")
+
+    word1=[]
+    word2=[]
+    word1lab=tk.Label(match_syn_window, text="Word 1:")
+    word2lab=tk.Label(match_syn_window, text="Word 2:")
+    word1ent=tk.Label(match_syn_window, text="--------------")
+    word2ent=tk.Label(match_syn_window, text="--------------")
+    word1b=tk.Button(match_syn_window,text="Select Word",command=chooseword1)
+    word2b=tk.Button(match_syn_window,text="Select Word",command=chooseword2)
+    validb=tk.Button(match_syn_window,text="Add Synonyms",command=do_match)
+
+    word1lab.grid(row=0, column=0, padx=5, pady=5)
+    word2lab.grid(row=0, column=1, padx=5, pady=5)
+    word1ent.grid(row=1, column=0, padx=5, pady=5)
+    word2ent.grid(row=1, column=1, padx=5, pady=5)
+    word1b.grid(row=2, column=0, padx=5, pady=5)
+    word2b.grid(row=2, column=1, padx=5, pady=5)
+    validb.grid(row=3,column=0, padx=5, pady=5,columnspan=2)
+
+def match_ant_gui():
+    match_ant_window=tk.Toplevel()
+    match_ant_window.title("Add antonyms")
+    match_ant_window.geometry("500x500")
+
+    def conf_word1(w,t,l):
+        word1.append(w)
+        word1.append(t)
+        word1.append(l)
+        word1ent.config(text=w)
+        wordbrowser.destroy()
+
+    def chooseword1():
+        wordlist=database.getallwords()
+
+        global wordbrowser
+        wordbrowser=tk.Toplevel()
+        wordbrowser.title("Word List")
+        wordbrowser.geometry("500x500")
+        for word in wordlist:
+            view=[]
+            view.append(tk.Frame(wordbrowser))
+            f=view[0]
+            view.append(tk.Label(f,text=word[0]))
+            view.append(tk.Label(f,text=word[1]))
+            view.append(tk.Label(f,text=word[2]))
+            view.append(tk.Button(f,text="Select Word",command=lambda w=word[0],l=word[1],t=word[2]: conf_word1(w,t,l)))
+            view[1].grid(row=0, column=0, padx=5, pady=5)
+            view[2].grid(row=0, column=1, padx=5, pady=5)
+            view[3].grid(row=0, column=2, padx=5, pady=5)
+            view[4].grid(row=0, column=3, padx=5, pady=5)
+            f.pack(pady=5)
+
+    def conf_word2(w,t,l):
+        word2.append(w)
+        word2.append(t)
+        word2.append(l)
+        word2ent.config(text=w)
+        wordbrowser.destroy()
+
+    def chooseword2():
+        wordlist=database.getallwords()
+
+        global wordbrowser
+        wordbrowser=tk.Toplevel()
+        wordbrowser.title("Word List")
+        wordbrowser.geometry("500x500")
+        for word in wordlist:
+            view=[]
+            view.append(tk.Frame(wordbrowser))
+            f=view[0]
+            view.append(tk.Label(f,text=word[0]))
+            view.append(tk.Label(f,text=word[1]))
+            view.append(tk.Label(f,text=word[2]))
+            view.append(tk.Button(f,text="Select Word",command=lambda w=word[0],l=word[1],t=word[2]: conf_word2(w,t,l)))
+            view[1].grid(row=0, column=0, padx=5, pady=5)
+            view[2].grid(row=0, column=1, padx=5, pady=5)
+            view[3].grid(row=0, column=2, padx=5, pady=5)
+            view[4].grid(row=0, column=3, padx=5, pady=5)
+            f.pack(pady=5)
+
+    def do_match():
+        if word1==[] or word2==[]:
+            messagebox.showerror("Error", "Please select at least one word")
+        if word1[1]!=word2[1]:
+            messagebox.showerror("Error", "Please select the same type of words")
+        else :
+            database.link_a(word1[2],word2[2],word1[1],word1[0],word2[0])
+            match_ant_window.destroy()
+            messagebox.showinfo("Success", f"{word1[0]} and {word2[0]} are now antonyms!")
+
+    word1=[]
+    word2=[]
+    word1lab=tk.Label(match_ant_window, text="Word 1:")
+    word2lab=tk.Label(match_ant_window, text="Word 2:")
+    word1ent=tk.Label(match_ant_window, text="--------------")
+    word2ent=tk.Label(match_ant_window, text="--------------")
+    word1b=tk.Button(match_ant_window,text="Select Word",command=chooseword1)
+    word2b=tk.Button(match_ant_window,text="Select Word",command=chooseword2)
+    validb=tk.Button(match_ant_window,text="Add Antonyms",command=do_match)
+
+    word1lab.grid(row=0, column=0, padx=5, pady=5)
+    word2lab.grid(row=0, column=1, padx=5, pady=5)
+    word1ent.grid(row=1, column=0, padx=5, pady=5)
+    word2ent.grid(row=1, column=1, padx=5, pady=5)
+    word1b.grid(row=2, column=0, padx=5, pady=5)
+    word2b.grid(row=2, column=1, padx=5, pady=5)
+    validb.grid(row=3,column=0, padx=5, pady=5,columnspan=2)
 
 def create_gui():
     global root
@@ -392,26 +576,26 @@ def create_gui():
 
     b_addw=tk.Button(root, text="Add a new word",command=new_word_gui)
     b_addm=tk.Button(root, text="Add a new meaning",command=new_meaning_gui)
-    b_ls=tk.Button(root, text="Link synonyms")
-    b_la=tk.Button(root, text="Link antonyms")
+    b_ls=tk.Button(root, text="Link synonyms",command=match_syn_gui)
+    b_la=tk.Button(root, text="Link antonyms",command=match_ant_gui)
     b_exp=tk.Button(root, text="Explore dictionary",command=show_dictio)
-    b_outcsv=tk.Button(root, text="Export to CSV",bg="red",fg="white")
-    b_incsv=tk.Button(root, text="Import CSV",bg="red",fg="white")
+#    b_outcsv=tk.Button(root, text="Export to CSV",bg="red",fg="white")
+#    b_incsv=tk.Button(root, text="Import CSV",bg="red",fg="white")
 
     b_addw.pack(pady=5,padx=30)
     b_addm.pack(pady=5,padx=30)
     b_ls.pack(pady=5,padx=30)
     b_la.pack(pady=5,padx=30)
     b_exp.pack(pady=5,padx=30)
-    b_outcsv.pack(pady=5,padx=30)
-    b_incsv.pack(pady=5,padx=30)
+#    b_outcsv.pack(pady=5,padx=30)
+#    b_incsv.pack(pady=5,padx=30)
 
     menu_bar = tk.Menu(root)
 
     tools_menu = tk.Menu(menu_bar, tearoff=0)
     tools_menu.add_command(label="Explore dictionary")
-    tools_menu.add_command(label="Export to CSV")
-    tools_menu.add_command(label="Import from CSV")
+#    tools_menu.add_command(label="Export to CSV")
+#    tools_menu.add_command(label="Import from CSV")
     menu_bar.add_cascade(label="Tools", menu=tools_menu)
 
     menu_bar.add_command(label="Settings")

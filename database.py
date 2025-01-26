@@ -224,7 +224,7 @@ conn = sqlite3.connect(DB_path)
 cursor = conn.cursor()
 
 cursor.execute('''
-    SELECT * FROM Sens
+    SELECT * FROM Mot
 ''')
 #conn.commit()
 res=cursor.fetchall()
