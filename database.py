@@ -4,6 +4,8 @@ DB_path = "dictionary.db"
 
 def add_word(mot,lang,t,genre=None,pl=None):
     first_let=mot[0].upper()
+    if t[0]=="v":
+        first_let=t[3]
     conn=sqlite3.connect(DB_path)
     cursor=conn.cursor()
 
@@ -18,7 +20,7 @@ def add_meaning(lang,txt):
     cursor=conn.cursor()
 
     cursor.execute('''
-        INSERT INTO Meaning(langue,txt) VALUES (?, ?)''',(lang,txt))
+        INSERT INTO Sens(langue,texte) VALUES (?, ?)''',(lang,txt))
     conn.commit()
 
 def getword(mot,lang,t):
@@ -132,6 +134,47 @@ def searchword(w):
 
     return results
 
+def showword(w,l,t):
+    conn = sqlite3.connect(DB_path)
+    cursor = conn.cursor()
+
+    id=getword(w,l,t)
+
+    cursor.execute('''
+    SELECT 
+        m.mot,
+        m.langue,
+        m.type,
+        COALESCE(m.genre, NULL) AS genre,
+        COALESCE(m.pluralité, NULL) AS pluralité,
+        GROUP_CONCAT(DISTINCT s.texte) AS meanings,
+        GROUP_CONCAT(DISTINCT syn.mot) AS synonyms,
+        GROUP_CONCAT(DISTINCT ant.mot) AS antonyms
+    FROM 
+        Mot m
+    LEFT JOIN 
+        Posseder p ON m.id = p.mot_id
+    LEFT JOIN 
+        Sens s ON p.sens_id = s.id
+    LEFT JOIN 
+        Synonyme syn ON m.id = syn.mot_id
+    LEFT JOIN 
+        Synonyme syn2 ON m.id = syn2.mot_syn_id  -- Pour récupérer les synonymes dans les deux sens
+    LEFT JOIN 
+        Antonyme ant ON m.id = ant.mot_id
+    LEFT JOIN 
+        Antonyme ant2 ON m.id = ant2.mot_ant_id  -- Pour récupérer les antonymes dans les deux sens
+    WHERE 
+        m.id = ?  -- Ce paramètre vous permet de chercher pour tous les enregistrements du mot "chat"
+    GROUP BY 
+        m.id, m.langue, m.type 
+    ''', (id,))  # Pass the parameter as a tuple
+
+    results = cursor.fetchall()
+    conn.close()
+
+    return results
+
 def showall(letter):
     conn = sqlite3.connect(DB_path)
     cursor = conn.cursor()
@@ -176,3 +219,16 @@ def getallwords():
     res=cursor.fetchall()
 
     return res
+
+conn = sqlite3.connect(DB_path)
+cursor = conn.cursor()
+
+cursor.execute('''
+    SELECT * FROM Mot
+''')
+#conn.commit()
+res=cursor.fetchall()
+
+print(res)
+
+

@@ -146,6 +146,7 @@ def new_word_gui():
                 if gender in ["m", "f", "none"] and plurality in ["s", "p", "none"]:
                     data_dict[word]["gender"] = gender if gender != "none" else None
                     data_dict[word]["plurality"] = plurality if plurality != "none" else None
+                    save_word()  # Call save_word after saving noun details
                     type_set_window.destroy()
                 else:
                     tk.messagebox.showerror(
@@ -176,6 +177,7 @@ def new_word_gui():
                 custom_type = lent.get().strip()
                 if custom_type:
                     data_dict[word]["type"] = custom_type
+                    save_word()  # Call save_word after saving custom type
                     type_set_window.destroy()
                 else:
                     tk.messagebox.showerror("Error", "Please enter a valid custom type.")
@@ -199,7 +201,7 @@ def new_word_gui():
         else:
             # For all other types, just save directly
             tk.messagebox.showinfo("Success", f"Word '{word}' added successfully!")
-        save_word()
+            save_word()  # Call save_word for other types
 
     # Create Word button
     create_btn = tk.Button(new_word_window, text="Create Word", command=handle_new_word)
@@ -241,8 +243,8 @@ def new_word_gui():
         child_window.geometry("300x200")
 
         arr=[]
-        #arr=[["Hello", "English"], ["Bonjour", "French"], ["Hola", "Spanish"]]
-        arr=database.getallmeanings()
+        arr=[["Hello", "English"], ["Bonjour", "French"], ["Hola", "Spanish"]]
+        #arr=database.getallmeanings()
 
         filtered_arr = [meaning for meaning in arr if meaning not in meanings]
 
@@ -306,12 +308,30 @@ def new_word_gui():
     managemeaningsbtn.pack(pady=5)
     create_btn.pack(pady=5)
 
+def expand_word(word,typeword,lang):
+    res=database.showword(word,lang,typeword)
+    print(res)
 
 def show_dictio():
     show_dictio=tk.Toplevel()
     show_dictio.title("Dictionary Explorer")
     show_dictio.geometry("500x500")
 
+    words=[]
+    words=database.getallwords()
+    for word in words:
+        items=[]
+        items.append(tk.Frame(show_dictio))
+        f=items[0]
+        items.append(tk.Label(f, text="["+word[1]+"]"))
+        items.append(tk.Label(f, text=word[0]))
+        items.append(tk.Label(f, text="("+word[2]+")"))
+        items.append(tk.Button(f, text="Show More >",command=lambda w=word[0],l=word[1],t=word[2]: expand_word(w,t,l)))
+        items[1].grid(row=0, column=0, padx=5, pady=5)
+        items[2].grid(row=0, column=1, padx=5, pady=5)
+        items[3].grid(row=0,column=2, padx=5, pady=5)
+        items[4].grid(row=0,column=3, padx=5, pady=5)
+        f.pack(pady=5)
 
 
 def create_gui():
@@ -324,7 +344,7 @@ def create_gui():
     b_addm=tk.Button(root, text="Add a new meaning")
     b_ls=tk.Button(root, text="Link synonyms")
     b_la=tk.Button(root, text="Link antonyms")
-    b_exp=tk.Button(root, text="Explore dictionary")
+    b_exp=tk.Button(root, text="Explore dictionary",command=show_dictio)
     b_outcsv=tk.Button(root, text="Export to CSV",bg="red",fg="white")
     b_incsv=tk.Button(root, text="Import CSV",bg="red",fg="white")
 
