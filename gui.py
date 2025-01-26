@@ -311,6 +311,29 @@ def new_word_gui():
 def expand_word(word,typeword,lang):
     res=database.showword(word,lang,typeword)
     print(res)
+    res=list(res[0])
+    print(res)
+    child_window=tk.Toplevel()
+    child_window.title(f"{word}({lang})")
+    child_window.geometry("300x200")
+
+    label=tk.Label(child_window, text="")
+    output=""
+    output+=res[0]+" ("+res[2]+")"
+    if res[3]!=None:
+        output+=" "+res[3]+" "
+    if res[4]!=None:
+        output+=" "+res[4]+" "
+    output+="\nlanguage :"+res[1]+"\n"
+    if res[5]!=None:
+        output+="Meanings :"+res[5]+"\n"
+    if res[6]!=None:
+        output += "Synonyms :" + res[5] + "\n"
+    if res[7]!=None:
+        output += "Antonyms :" + res[5] + "\n"
+    label.configure(text=output)
+    label.pack(pady=5)
+
 
 def show_dictio():
     show_dictio=tk.Toplevel()
@@ -333,6 +356,33 @@ def show_dictio():
         items[4].grid(row=0,column=3, padx=5, pady=5)
         f.pack(pady=5)
 
+def new_meaning_gui():
+    new_meaning_window=tk.Toplevel()
+    new_meaning_window.title("New Meaning")
+    new_meaning_window.geometry("500x500")
+    color = randomcolorcode()
+    light_color = lighten_color(color)
+    new_meaning_window.configure(background=color)
+
+    def create_meaning():
+        lang=langent.get()
+        txt=textentry.get()
+        database.add_meaning(lang, txt)
+        tk.messagebox.showinfo("Success", "meaning added successfully!")
+        new_meaning_window.destroy()
+
+    langlab=tk.Label(new_meaning_window, text="Language :")
+    langent=tk.Entry(new_meaning_window)
+    textlab=tk.Label(new_meaning_window, text="Text :")
+    textentry=tk.Entry(new_meaning_window)
+    validbutton=tk.Button(new_meaning_window,text="Add Meaning to the list",command=create_meaning)
+
+    langlab.grid(row=0, column=0, padx=5, pady=5)
+    langent.grid(row=0, column=1, padx=5, pady=5)
+    textlab.grid(row=1, column=0, padx=5, pady=5)
+    textentry.grid(row=1, column=1, padx=5, pady=5)
+    validbutton.grid(row=2, column=0, padx=5, pady=5,columnspan=2)
+
 
 def create_gui():
     global root
@@ -341,7 +391,7 @@ def create_gui():
     root.geometry("400x400")
 
     b_addw=tk.Button(root, text="Add a new word",command=new_word_gui)
-    b_addm=tk.Button(root, text="Add a new meaning")
+    b_addm=tk.Button(root, text="Add a new meaning",command=new_meaning_gui)
     b_ls=tk.Button(root, text="Link synonyms")
     b_la=tk.Button(root, text="Link antonyms")
     b_exp=tk.Button(root, text="Explore dictionary",command=show_dictio)

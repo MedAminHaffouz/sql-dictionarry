@@ -107,8 +107,8 @@ def searchword(w):
         COALESCE(m.genre, NULL) AS genre,
         COALESCE(m.pluralité, NULL) AS pluralité,
         GROUP_CONCAT(DISTINCT s.texte) AS meanings,
-        GROUP_CONCAT(DISTINCT syn.mot) AS synonyms,
-        GROUP_CONCAT(DISTINCT ant.mot) AS antonyms
+        GROUP_CONCAT(DISTINCT syn_mot.mot) AS synonyms,
+        GROUP_CONCAT(DISTINCT ant_mot.mot) AS antonyms
     FROM 
         Mot m
     LEFT JOIN 
@@ -118,13 +118,13 @@ def searchword(w):
     LEFT JOIN 
         Synonyme syn ON m.id = syn.mot_id
     LEFT JOIN 
-        Synonyme syn2 ON m.id = syn2.mot_syn_id  -- Pour récupérer les synonymes dans les deux sens
+        Mot syn_mot ON syn.mot_syn_id = syn_mot.id  -- Join to get the actual synonym words
     LEFT JOIN 
         Antonyme ant ON m.id = ant.mot_id
     LEFT JOIN 
-        Antonyme ant2 ON m.id = ant2.mot_ant_id  -- Pour récupérer les antonymes dans les deux sens
+        Mot ant_mot ON ant.mot_ant_id = ant_mot.id  -- Join to get the actual antonym words
     WHERE 
-        m.mot = ?  -- Ce paramètre vous permet de chercher pour tous les enregistrements du mot "chat"
+        m.mot = ?  -- This parameter allows you to search for all records of the word "chat"
     GROUP BY 
         m.id, m.langue, m.type 
     ''', (w,))  # Pass the parameter as a tuple
@@ -134,11 +134,11 @@ def searchword(w):
 
     return results
 
-def showword(w,l,t):
+def showword(w, l, t):
     conn = sqlite3.connect(DB_path)
     cursor = conn.cursor()
 
-    id=getword(w,l,t)
+    id = getword(w, l, t)
 
     cursor.execute('''
     SELECT 
@@ -148,8 +148,8 @@ def showword(w,l,t):
         COALESCE(m.genre, NULL) AS genre,
         COALESCE(m.pluralité, NULL) AS pluralité,
         GROUP_CONCAT(DISTINCT s.texte) AS meanings,
-        GROUP_CONCAT(DISTINCT syn.mot) AS synonyms,
-        GROUP_CONCAT(DISTINCT ant.mot) AS antonyms
+        GROUP_CONCAT(DISTINCT syn_mot.mot) AS synonyms,
+        GROUP_CONCAT(DISTINCT ant_mot.mot) AS antonyms
     FROM 
         Mot m
     LEFT JOIN 
@@ -159,13 +159,13 @@ def showword(w,l,t):
     LEFT JOIN 
         Synonyme syn ON m.id = syn.mot_id
     LEFT JOIN 
-        Synonyme syn2 ON m.id = syn2.mot_syn_id  -- Pour récupérer les synonymes dans les deux sens
+        Mot syn_mot ON syn.mot_syn_id = syn_mot.id  -- Join to get the actual synonym words
     LEFT JOIN 
         Antonyme ant ON m.id = ant.mot_id
     LEFT JOIN 
-        Antonyme ant2 ON m.id = ant2.mot_ant_id  -- Pour récupérer les antonymes dans les deux sens
+        Mot ant_mot ON ant.mot_ant_id = ant_mot.id  -- Join to get the actual antonym words
     WHERE 
-        m.id = ?  -- Ce paramètre vous permet de chercher pour tous les enregistrements du mot "chat"
+        m.id = ?  -- This parameter allows you to search for all records of the word "chat"
     GROUP BY 
         m.id, m.langue, m.type 
     ''', (id,))  # Pass the parameter as a tuple
@@ -224,7 +224,7 @@ conn = sqlite3.connect(DB_path)
 cursor = conn.cursor()
 
 cursor.execute('''
-    SELECT * FROM Mot
+    SELECT * FROM Sens
 ''')
 #conn.commit()
 res=cursor.fetchall()
